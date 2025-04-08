@@ -42,6 +42,7 @@
     "path": "^0.12.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "ts-jenum": "^2.2.2",
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^4.7.1"
   },

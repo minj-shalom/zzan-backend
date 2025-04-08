@@ -5862,6 +5862,11 @@ ts-api-utils@^2.0.1:
   resolved "https://registry.yarnpkg.com/ts-api-utils/-/ts-api-utils-2.1.0.tgz#595f7094e46eed364c13fd23e75f9513d29baf91"
   integrity sha512-CUgTZL1irw8u29bzrOD/nH85jqyc74D6SshFgujOIA7osm2Rz7dYH77agkx7H4FBNxDq7Cjf+IjaX/8zwFW+ZQ==
 
+ts-jenum@^2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/ts-jenum/-/ts-jenum-2.2.2.tgz#9279b13704cdff7df8dcb1d106e4696e518b5285"
+  integrity sha512-vykqLRRmbgyKOE/XgLPd9Vbm03LHF3IYqNZAVGDY0GiHazerKSdfXi41KYCP6vV3wHpm2sgLEnXwXHFGQtDhHw==
+
 ts-jest@^29.2.5:
   version "29.3.1"
   resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-29.3.1.tgz#2e459e1f94a833bd8216ba4b045fac948e265937"

@@ -1,6 +1,7 @@
 import { HttpException } from '@nestjs/common';
+import { FontExceptionCode } from '../error-codes/font.exception.codes';
 
-type ExceptionCode = any;
+type ExceptionCode = FontExceptionCode;
 
 export class BusinessException extends HttpException {
   constructor(exceptionCode: ExceptionCode, message?: string) {
