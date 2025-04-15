@@ -17,7 +17,11 @@ import {
 import { AppLogger } from '../../../common/logger/logger.service';
 import { FontService } from '../application/font.service';
 import { Response } from 'express';
-import { PaginationFilter } from 'src/common/format/pagination-filter.format';
+import {
+  Pagination,
+  PaginationFilter,
+} from 'src/common/format/pagination-filter.format';
+import { GetFontListFilter } from './dto/request-dtos/get-font-list-filter.dto';
 
 @ApiTags('Font')
 @Controller('font')
@@ -42,15 +46,18 @@ export class FontController {
   })
   async getFontList(
     @Req() req,
-    @Query() pagination: PaginationFilter,
+    @Pagination() pagination: PaginationFilter,
+    @Query() filter: GetFontListFilter,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      pagination.offset = pagination.offset ?? '0';
-      pagination.limit = pagination.limit ?? '10';
-
       const result = await this.fontService.getFontList({
         pagination,
+        filter: {
+          ...filter,
+          fontType: filter['fontType[]'],
+          license: filter['license[]'],
+        },
       });
 
       if (result) {

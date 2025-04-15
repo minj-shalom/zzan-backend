@@ -1,6 +1,7 @@
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { Font } from '../domain/font.entity';
 import { PaginationFilter } from 'src/common/format/pagination-filter.format';
+import { GetFontListFilter } from '../presentation/dto/request-dtos/get-font-list-filter.dto';
 
 export class FontCustomRepository extends EntityRepository<Font> {
   /**
@@ -8,9 +9,33 @@ export class FontCustomRepository extends EntityRepository<Font> {
    * @description 폰트 목록 조회
    * @return Font[]
    */
-  async getFontList(data: { pagination?: PaginationFilter }): Promise<any> {
+  async getFontList(data: {
+    pagination: PaginationFilter;
+    filter: GetFontListFilter;
+  }): Promise<any> {
     try {
+      const pagination = data?.pagination;
+      const filter = data?.filter;
       const filterParams: unknown[] = [];
+      const fontType = filter.fontType
+        ? typeof filter.fontType != 'string'
+          ? filter.fontType.map((value) => `'${value}'`).join(', ')
+          : `'${filter.fontType}'`
+        : filter.fontType;
+      const license = filter.license
+        ? typeof filter.license != 'string'
+          ? filter.license.map((value) => `'${value}'`).join(', ')
+          : `'${filter.license}'`
+        : filter.license;
+
+      if (filter && filter?.search) {
+        filterParams.push(`%${filter?.search}%`);
+        filterParams.push(`%${filter?.search}%`);
+      }
+
+      if (filter && filter?.fontWeight) {
+        filterParams.push(Number(filter?.fontWeight));
+      }
 
       const count = await this.em.getConnection().execute(
         `
@@ -19,12 +44,17 @@ export class FontCustomRepository extends EntityRepository<Font> {
         INNER JOIN public."font_license" fl ON f.id = fl.font_id
         WHERE 1=1
         AND f.deleted_at is NULL
+        ${filter && filter?.search ? 'AND (f."title" ILIKE ? OR f."author" ILIKE ?)' : ''}
+        ${filter && filter?.fontType && filter?.fontType?.length > 0 ? `AND f.type IN (${fontType})` : ''}
+        ${filter && filter?.fontWeight ? 'AND f.font_weight >= ?' : ''}
+        ${filter && filter?.license && filter?.license?.length > 0 ? `AND fl.category @> ARRAY[${license}]::text[]` : ''}
         `,
+        filterParams,
       );
 
-      if (data?.pagination?.offset && data?.pagination?.limit) {
-        filterParams.push(Number(data?.pagination?.offset));
-        filterParams.push(Number(data?.pagination?.limit));
+      if (pagination?.offset !== undefined && pagination?.limit !== undefined) {
+        filterParams.push(pagination?.offset);
+        filterParams.push(pagination?.limit);
       }
 
       const result = await this.em.getConnection().execute(
@@ -36,15 +66,22 @@ export class FontCustomRepository extends EntityRepository<Font> {
                 f.font_weight,
                 f.font_face,
                 f.download_url,
+                json_build_object(
+                    'category', fl.category
+                ) AS license,
                 f.created_at,
                 f.updated_at
         FROM public.font f
         INNER JOIN public."font_license" fl ON f.id = fl.font_id
         WHERE 1=1
         AND f.deleted_at is NULL
-        ORDER BY f.id DESC
+        ${filter && filter?.search ? 'AND (f."title" ILIKE ? OR f."author" ILIKE ?)' : ''}
+        ${filter && filter?.fontType && filter?.fontType?.length > 0 ? `AND f.type IN (${fontType})` : ''}
+        ${filter && filter?.fontWeight ? 'AND f.font_weight >= ?' : ''}
+        ${filter && filter?.license && filter?.license?.length > 0 ? `AND fl.category @> ARRAY[${license}]::text[]` : ''}
+        ${filter?.orderBy && filter?.orderBy === 'name' ? `ORDER BY f.title ASC` : `ORDER BY f.id DESC`}
         ${
-          data?.pagination?.offset && data?.pagination?.limit
+          pagination?.offset !== undefined && pagination?.limit !== undefined
             ? `
             OFFSET ?
             LIMIT ?;
@@ -91,14 +128,8 @@ export class FontCustomRepository extends EntityRepository<Font> {
                 f.font_face,
                 f.download_url,
                 json_build_object(
-                    'license', fl.license,
-                    'print', fl.print,
-                    'website', fl.website,
-                    'packaging', fl.packaging,
-                    'video', fl.video,
-                    'embedding', fl.embedding,
-                    'bi_ci', fl.bi_ci,
-                    'ofl', fl.ofl
+                    'content', fl.content,
+                    'category', fl.category
                 ) AS license,
                 f.created_at,
                 f.updated_at

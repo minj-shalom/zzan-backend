@@ -29,7 +29,7 @@ export class Font {
 
   @Property({
     nullable: false,
-    comment: '형태',
+    comment: '타입',
   })
   type: FontTypeEnum;
 

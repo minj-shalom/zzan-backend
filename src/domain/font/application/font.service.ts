@@ -6,6 +6,7 @@ import { FontCustomRepository } from '../repository/font.custom.repository';
 import { PaginationFilter } from 'src/common/format/pagination-filter.format';
 import { BusinessException } from 'src/common/exceptions/exception/buisness.exception';
 import { FontExceptionCode } from 'src/common/exceptions/error-codes/font.exception.codes';
+import { GetFontListFilter } from '../presentation/dto/request-dtos/get-font-list-filter.dto';
 
 @Injectable()
 export class FontService {
@@ -21,7 +22,8 @@ export class FontService {
    * @return Font[]
    */
   async getFontList(data: {
-    pagination?: PaginationFilter;
+    pagination: PaginationFilter;
+    filter: GetFontListFilter;
   }): Promise<{ data: Font[]; count: number }> {
     try {
       // 폰트 목록 조회
