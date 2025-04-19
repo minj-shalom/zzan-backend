@@ -20,8 +20,9 @@ import { Response } from 'express';
 import {
   Pagination,
   PaginationFilter,
-} from 'src/common/format/pagination-filter.format';
+} from 'src/common/format/pagination.format';
 import { GetFontListFilter } from './dto/request-dtos/get-font-list-filter.dto';
+import { SearchFontFilter } from './dto/request-dtos/search-font-filter.dto';
 
 @ApiTags('Font')
 @Controller('font')
@@ -70,6 +71,46 @@ export class FontController {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           message: '폰트 목록 조회에 실패했습니다.',
+        });
+      }
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Get('/search')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '폰트 검색',
+    description: '폰트를 검색합니다.',
+  })
+  @ApiOkResponse({
+    status: HttpStatus.OK,
+    description: '폰트를 검색했습니다.',
+    type: '',
+  })
+  async searchFont(
+    @Req() req,
+    @Pagination() pagination: PaginationFilter,
+    @Query() filter: SearchFontFilter,
+    @Res() res: Response,
+  ): Promise<any> {
+    try {
+      const result = await this.fontService.searchFont({
+        pagination,
+        filter,
+      });
+
+      if (result) {
+        res.status(HttpStatus.OK).json({
+          status: HttpStatus.OK,
+          data: result,
+          message: '폰트를 검색했습니다.',
+        });
+      } else {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: '폰트 검색에 실패했습니다.',
         });
       }
     } catch (e) {

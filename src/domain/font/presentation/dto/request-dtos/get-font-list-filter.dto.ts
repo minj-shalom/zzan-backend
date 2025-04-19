@@ -11,13 +11,6 @@ export class GetFontListFilter {
   orderBy?: string;
 
   @ApiProperty({
-    description: '검색',
-    type: String,
-    required: false,
-  })
-  search?: string;
-
-  @ApiProperty({
     description: '타입',
     type: String,
     required: false,
