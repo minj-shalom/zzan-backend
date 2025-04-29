@@ -5,7 +5,6 @@ import {
   HttpStatus,
   Param,
   Query,
-  Req,
   Res,
 } from '@nestjs/common';
 import {
@@ -21,8 +20,8 @@ import {
   Pagination,
   PaginationFilter,
 } from 'src/common/format/pagination.format';
-import { GetFontListFilter } from './dto/request-dtos/get-font-list-filter.dto';
-import { SearchFontFilter } from './dto/request-dtos/search-font-filter.dto';
+import { GetFontListFilterDto } from './dto/request-dtos/get-font-list-filter.dto';
+import { SearchFontFilterDto } from './dto/request-dtos/search-font-filter.dto';
 
 @ApiTags('Font')
 @Controller('font')
@@ -46,11 +45,10 @@ export class FontController {
     type: '',
   })
   async getFontList(
-    @Req() req,
     @Pagination() pagination: PaginationFilter,
-    @Query() filter: GetFontListFilter,
+    @Query() filter: GetFontListFilterDto,
     @Res() res: Response,
-  ): Promise<any> {
+  ): Promise<Response> {
     try {
       const result = await this.fontService.getFontList({
         pagination,
@@ -61,18 +59,11 @@ export class FontController {
         },
       });
 
-      if (result) {
-        res.status(HttpStatus.OK).json({
-          status: HttpStatus.OK,
-          data: result,
-          message: '폰트 목록을 조회했습니다.',
-        });
-      } else {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: '폰트 목록 조회에 실패했습니다.',
-        });
-      }
+      return res.status(HttpStatus.OK).json({
+        status: HttpStatus.OK,
+        data: result,
+        message: '폰트 목록을 조회했습니다.',
+      });
     } catch (e) {
       throw e;
     }
@@ -90,29 +81,21 @@ export class FontController {
     type: '',
   })
   async searchFont(
-    @Req() req,
     @Pagination() pagination: PaginationFilter,
-    @Query() filter: SearchFontFilter,
+    @Query() filter: SearchFontFilterDto,
     @Res() res: Response,
-  ): Promise<any> {
+  ): Promise<Response> {
     try {
       const result = await this.fontService.searchFont({
         pagination,
         filter,
       });
 
-      if (result) {
-        res.status(HttpStatus.OK).json({
-          status: HttpStatus.OK,
-          data: result,
-          message: '폰트를 검색했습니다.',
-        });
-      } else {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: '폰트 검색에 실패했습니다.',
-        });
-      }
+      return res.status(HttpStatus.OK).json({
+        status: HttpStatus.OK,
+        data: result,
+        message: '폰트를 검색했습니다.',
+      });
     } catch (e) {
       throw e;
     }
@@ -136,16 +119,15 @@ export class FontController {
     type: String,
   })
   async getFontDetail(
-    @Req() req,
     @Param('font_id') font_id: number,
     @Res() res: Response,
-  ): Promise<any> {
+  ): Promise<Response> {
     try {
       const result = await this.fontService.getFontDetail({
         font_id: font_id,
       });
 
-      res.status(HttpStatus.OK).json({
+      return res.status(HttpStatus.OK).json({
         status: HttpStatus.OK,
         data: result,
         message: '폰트 상세를 조회했습니다.',

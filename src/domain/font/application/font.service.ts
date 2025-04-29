@@ -3,14 +3,14 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Font } from '../domain/font.entity';
 import { FontCustomRepository } from '../repository/font.custom.repository';
-import {
-  PaginationFilter,
-  PaginationResponse,
-} from 'src/common/format/pagination.format';
+import { PaginationFilter } from 'src/common/format/pagination.format';
 import { BusinessException } from 'src/common/exceptions/exception/buisness.exception';
 import { FontExceptionCode } from 'src/common/exceptions/error-codes/font.exception.codes';
-import { GetFontListFilter } from '../presentation/dto/request-dtos/get-font-list-filter.dto';
-import { SearchFontFilter } from '../presentation/dto/request-dtos/search-font-filter.dto';
+import { GetFontListFilterDto } from '../presentation/dto/request-dtos/get-font-list-filter.dto';
+import { SearchFontFilterDto } from '../presentation/dto/request-dtos/search-font-filter.dto';
+import { ApiListResponse } from 'src/common/format/pagination-response.format';
+import { GetFontListDto } from '../presentation/dto/response-dtos/get-font-list.dto';
+import { GetFontDetailDto } from '../presentation/dto/response-dtos/get-font-detail.dto';
 
 @Injectable()
 export class FontService {
@@ -23,12 +23,12 @@ export class FontService {
   /**
    * @title getFontList
    * @description 폰트 목록 조회
-   * @return Font[]
+   * @return ApiListResponse<GetFontListDto>
    */
   async getFontList(data: {
     pagination: PaginationFilter;
-    filter: GetFontListFilter;
-  }): Promise<{ data: Font[]; pagination: PaginationResponse }> {
+    filter: GetFontListFilterDto;
+  }): Promise<ApiListResponse<GetFontListDto>> {
     try {
       // 폰트 목록 조회
       const result = await this.fontCustomRepository.getFontList(data);
@@ -42,9 +42,9 @@ export class FontService {
   /**
    * @title getFontDetail
    * @description 폰트 상세 조회
-   * @return Font
+   * @return GetFontDetailDto
    */
-  async getFontDetail(data: { font_id: number }): Promise<any> {
+  async getFontDetail(data: { font_id: number }): Promise<GetFontDetailDto> {
     try {
       // 폰트 상세 조회
       const result = await this.fontCustomRepository.getFontDetail(data);
@@ -62,12 +62,12 @@ export class FontService {
   /**
    * @title searchFont
    * @description 폰트 검색
-   * @return Font[]
+   * @return ApiListResponse<GetFontListDto>
    */
   async searchFont(data: {
     pagination: PaginationFilter;
-    filter: SearchFontFilter;
-  }): Promise<{ data: Font[]; pagination: PaginationResponse }> {
+    filter: SearchFontFilterDto;
+  }): Promise<ApiListResponse<GetFontListDto>> {
     try {
       // 폰트 검색
       const result = await this.fontCustomRepository.searchFont(data);

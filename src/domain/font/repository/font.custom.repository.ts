@@ -1,22 +1,22 @@
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { Font } from '../domain/font.entity';
-import {
-  PaginationFilter,
-  PaginationResponse,
-} from 'src/common/format/pagination.format';
-import { GetFontListFilter } from '../presentation/dto/request-dtos/get-font-list-filter.dto';
-import { SearchFontFilter } from '../presentation/dto/request-dtos/search-font-filter.dto';
+import { PaginationFilter } from 'src/common/format/pagination.format';
+import { GetFontListFilterDto } from '../presentation/dto/request-dtos/get-font-list-filter.dto';
+import { SearchFontFilterDto } from '../presentation/dto/request-dtos/search-font-filter.dto';
+import { ApiListResponse } from 'src/common/format/pagination-response.format';
+import { GetFontListDto } from '../presentation/dto/response-dtos/get-font-list.dto';
+import { GetFontDetailDto } from '../presentation/dto/response-dtos/get-font-detail.dto';
 
 export class FontCustomRepository extends EntityRepository<Font> {
   /**
    * @title getFontList
    * @description 폰트 목록 조회
-   * @return Font[]
+   * @return ApiListResponse<GetFontListDto>
    */
   async getFontList(data: {
     pagination: PaginationFilter;
-    filter: GetFontListFilter;
-  }): Promise<{ data: Font[]; pagination: PaginationResponse }> {
+    filter: GetFontListFilterDto;
+  }): Promise<ApiListResponse<GetFontListDto>> {
     try {
       const pagination = data?.pagination;
       const filter = data?.filter;
@@ -54,7 +54,17 @@ export class FontCustomRepository extends EntityRepository<Font> {
         WHERE 1=1
         AND f.deleted_at is NULL
         ${filter && filter?.fontType && filter?.fontType?.length > 0 ? `AND f.type IN (${fontType})` : ''}
-        ${filter && filter?.fontWeight ? 'AND f.font_weight >= ?' : ''}
+        ${
+          filter && filter?.fontWeight
+            ? `
+              AND (
+                SELECT CAST(COUNT(*) AS integer)
+                FROM public.font_face ff
+                WHERE ff.font_id = f.id
+              ) >= ?
+              `
+            : ''
+        }
         ${filter && filter?.license && filter?.license?.length > 0 ? `AND fl.category @> ARRAY[${license}]::text[]` : ''}
         `,
         filterParams,
@@ -65,14 +75,24 @@ export class FontCustomRepository extends EntityRepository<Font> {
         filterParams.push(pagination?.limit);
       }
 
-      const result = await this.em.getConnection().execute(
+      const result: GetFontListDto[] = await this.em.getConnection().execute(
         `
         SELECT  f.id,
                 f.title,
                 f.author,
                 f.type,
-                f.font_weight,
-                f.font_face,
+                (
+                    SELECT CAST(COUNT(*) AS integer)
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                ) AS font_weight,
+                (
+                    SELECT ff.font_face
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                      AND ff."default" = true
+                    LIMIT 1
+                ) AS font_face,
                 f.download_url,
                 json_build_object(
                     'category', fl.category
@@ -84,7 +104,17 @@ export class FontCustomRepository extends EntityRepository<Font> {
         WHERE 1=1
         AND f.deleted_at is NULL
         ${filter && filter?.fontType && filter?.fontType?.length > 0 ? `AND f.type IN (${fontType})` : ''}
-        ${filter && filter?.fontWeight ? 'AND f.font_weight >= ?' : ''}
+        ${
+          filter && filter?.fontWeight
+            ? `
+              AND (
+                SELECT CAST(COUNT(*) AS integer)
+                FROM public.font_face ff
+                WHERE ff.font_id = f.id
+              ) >= ?
+              `
+            : ''
+        }
         ${filter && filter?.license && filter?.license?.length > 0 ? `AND fl.category @> ARRAY[${license}]::text[]` : ''}
         ${filter?.orderBy && filter?.orderBy === 'name' ? `ORDER BY f.title ASC` : `ORDER BY f.id DESC`}
         ${
@@ -100,7 +130,7 @@ export class FontCustomRepository extends EntityRepository<Font> {
       );
 
       return {
-        data: result as Font[],
+        data: result,
         pagination: {
           total: Number(total?.[0]?.total),
           count: Number(count?.[0]?.count),
@@ -116,9 +146,9 @@ export class FontCustomRepository extends EntityRepository<Font> {
   /**
    * @title getFontDetail
    * @description 폰트 상세 조회
-   * @return Font
+   * @return GetFontDetailDto
    */
-  async getFontDetail(data: { font_id: number }): Promise<any> {
+  async getFontDetail(data: { font_id: number }): Promise<GetFontDetailDto> {
     try {
       const filterParams: unknown[] = [];
 
@@ -126,14 +156,35 @@ export class FontCustomRepository extends EntityRepository<Font> {
         filterParams.push(data?.font_id);
       }
 
-      const result = await this.em.getConnection().execute(
+      const result: GetFontDetailDto = await this.em.getConnection().execute(
         `
         SELECT  f.id,
                 f.title,
                 f.author,
                 f.type,
-                f.font_weight,
-                f.font_face,
+                (
+                    SELECT CAST(COUNT(*) AS integer)
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                ) AS font_weight,
+                (
+                    SELECT ff.font_face
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                      AND ff."default" = true
+                    LIMIT 1
+                ) AS font_face,
+                (
+                    SELECT json_agg(
+                      json_build_object(
+                        'font_face', ff.font_face,
+                        'font_weight', ff.font_weight,
+                        'default', ff."default"
+                      )
+                    )
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                ) AS font_face_list,
                 f.download_url,
                 json_build_object(
                     'content', fl.content,
@@ -159,12 +210,12 @@ export class FontCustomRepository extends EntityRepository<Font> {
   /**
    * @title searchFont
    * @description 폰트 검색
-   * @return Font[]
+   * @return ApiListResponse<GetFontListDto>
    */
   async searchFont(data: {
     pagination: PaginationFilter;
-    filter: SearchFontFilter;
-  }): Promise<{ data: Font[]; pagination: PaginationResponse }> {
+    filter: SearchFontFilterDto;
+  }): Promise<ApiListResponse<GetFontListDto>> {
     try {
       const pagination = data?.pagination;
       const filter = data?.filter;
@@ -202,14 +253,24 @@ export class FontCustomRepository extends EntityRepository<Font> {
         filterParams.push(pagination?.limit);
       }
 
-      const result = await this.em.getConnection().execute(
+      const result: GetFontListDto[] = await this.em.getConnection().execute(
         `
         SELECT  f.id,
                 f.title,
                 f.author,
                 f.type,
-                f.font_weight,
-                f.font_face,
+                (
+                    SELECT CAST(COUNT(*) AS integer)
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                ) AS font_weight,
+                (
+                    SELECT ff.font_face
+                    FROM public.font_face ff
+                    WHERE ff.font_id = f.id
+                      AND ff."default" = true
+                    LIMIT 1
+                ) AS font_face,
                 f.download_url,
                 json_build_object(
                     'category', fl.category
@@ -235,7 +296,7 @@ export class FontCustomRepository extends EntityRepository<Font> {
       );
 
       return {
-        data: result as Font[],
+        data: result,
         pagination: {
           total: Number(total?.[0]?.total),
           count: Number(count?.[0]?.count),

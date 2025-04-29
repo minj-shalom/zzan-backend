@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { FontLicenseEnum } from 'src/domain/font/domain/status/FontLicenseEnum';
 import { FontTypeEnum } from 'src/domain/font/domain/status/FontTypeEnum';
 
-export class GetFontListFilter {
+export class GetFontListFilterDto {
   @ApiProperty({
     description: '정렬',
     type: String,

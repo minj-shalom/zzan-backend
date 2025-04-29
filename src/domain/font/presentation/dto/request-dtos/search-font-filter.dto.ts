@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SearchFontFilter {
+export class SearchFontFilterDto {
   @ApiProperty({
     description: '검색',
     type: String,
