@@ -77,4 +77,15 @@ export class FontService {
       throw e;
     }
   }
+
+  /**
+   * @title findFont
+   * @description 폰트 검색
+   * @return Font
+   */
+  async findFont(data: { font_id?: number }) {
+    const result = await this.fontCustomRepository.findFont(data);
+
+    return result;
+  }
 }

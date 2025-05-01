@@ -59,6 +59,13 @@ export class GetFontListDto {
   license: object;
 
   @ApiProperty({
+    description: '조회수',
+    type: Number,
+    required: true,
+  })
+  view: number;
+
+  @ApiProperty({
     description: '생성 일시',
     type: String,
     required: true,

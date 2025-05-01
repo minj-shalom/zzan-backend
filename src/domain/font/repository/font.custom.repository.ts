@@ -6,6 +6,8 @@ import { SearchFontFilterDto } from '../presentation/dto/request-dtos/search-fon
 import { ApiListResponse } from 'src/common/format/pagination-response.format';
 import { GetFontListDto } from '../presentation/dto/response-dtos/get-font-list.dto';
 import { GetFontDetailDto } from '../presentation/dto/response-dtos/get-font-detail.dto';
+import { BusinessException } from 'src/common/exceptions/exception/buisness.exception';
+import { FontExceptionCode } from 'src/common/exceptions/error-codes/font.exception.codes';
 
 export class FontCustomRepository extends EntityRepository<Font> {
   /**
@@ -97,6 +99,11 @@ export class FontCustomRepository extends EntityRepository<Font> {
                 json_build_object(
                     'category', fl.category
                 ) AS license,
+                COALESCE((
+                    SELECT CAST(COUNT(*) AS integer)
+                    FROM public.font_view_log fvl
+                    WHERE fvl.font_id = f.id
+                ), 0) AS view,
                 f.created_at,
                 f.updated_at
         FROM public.font f
@@ -116,7 +123,7 @@ export class FontCustomRepository extends EntityRepository<Font> {
             : ''
         }
         ${filter && filter?.license && filter?.license?.length > 0 ? `AND fl.category @> ARRAY[${license}]::text[]` : ''}
-        ${filter?.orderBy && filter?.orderBy === 'name' ? `ORDER BY f.title ASC` : `ORDER BY f.id DESC`}
+        ${filter?.orderBy && filter?.orderBy === 'date' ? `ORDER BY f.id DESC` : filter?.orderBy === 'name' ? `ORDER BY f.title ASC` : `ORDER BY view DESC`}
         ${
           pagination?.offset !== undefined && pagination?.limit !== undefined
             ? `
@@ -190,6 +197,11 @@ export class FontCustomRepository extends EntityRepository<Font> {
                     'content', fl.content,
                     'category', fl.category
                 ) AS license,
+                COALESCE((
+                    SELECT CAST(COUNT(*) AS integer)
+                    FROM public.font_view_log fvl
+                    WHERE fvl.font_id = f.id
+                ), 0) AS view,
                 f.created_at,
                 f.updated_at
         FROM public.font f
@@ -275,6 +287,11 @@ export class FontCustomRepository extends EntityRepository<Font> {
                 json_build_object(
                     'category', fl.category
                 ) AS license,
+                COALESCE((
+                    SELECT CAST(COUNT(*) AS integer)
+                    FROM public.font_view_log fvl
+                    WHERE fvl.font_id = f.id
+                ), 0) AS view,
                 f.created_at,
                 f.updated_at
         FROM public.font f
@@ -306,6 +323,33 @@ export class FontCustomRepository extends EntityRepository<Font> {
       };
     } catch (e) {
       throw e;
+    }
+  }
+
+  /**
+   * @title findFont
+   * @description 폰트 검색
+   * @return Font
+   */
+  async findFont(data: { font_id?: number }): Promise<Font> {
+    try {
+      const query = this.createQueryBuilder().select('*');
+
+      query.where({
+        deleted_at: null,
+      });
+
+      if (data.font_id !== undefined) {
+        query.andWhere({
+          id: data.font_id,
+        });
+      }
+
+      const result = await query.execute();
+
+      return result[0];
+    } catch {
+      throw new BusinessException(FontExceptionCode.FONT_NOT_FOUND);
     }
   }
 }
