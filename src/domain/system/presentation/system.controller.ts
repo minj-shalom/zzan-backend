@@ -11,7 +11,7 @@ import { AppLogger } from '../../../common/logger/logger.service';
 import { Response } from 'express';
 
 @ApiTags('System')
-@Controller('log')
+@Controller('system')
 export class SystemController {
   constructor(private readonly logger: AppLogger) {
     this.logger.setContext(SystemController.name);
