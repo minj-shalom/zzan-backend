@@ -4,12 +4,14 @@ import { ConfigurationModule } from './infrastructure/configuration/configuratio
 import { CommonModule } from './common/common.module';
 import { FontModule } from './domain/font/font.module';
 import { LogModule } from './domain/log/log.module';
+import { SystemModule } from './domain/system/system.module';
 
 export const DomainModules = [
   CommonModule,
   ConfigurationModule,
   FontModule,
   LogModule,
+  SystemModule,
 ];
 
 export const GlobalExceptionFilter = [
